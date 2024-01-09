@@ -19,8 +19,8 @@
 #  - hack around rockchips vp8&9 colorspace is not detected when used with Firefox
 
 pkgname=ffmpeg-mpp
-pkgver=6.0
-pkgrel=10
+pkgver=6.1.1
+pkgrel=1
 epoch=2
 _obs_deps_tag=2023-04-03
 pkgdesc='Complete solution to record, convert and stream audio and video supporting rockchip MPP hardware decoder'
@@ -35,6 +35,8 @@ depends=(
   bzip2
   fontconfig
   fribidi
+  glib2
+  glibc
   gmp
   gnutls
   gsm
@@ -47,13 +49,16 @@ depends=(
   dav1d
   libdrm
   libfreetype.so
+  libharfbuzz.so
   libgl
   libiec61883
   libjxl
   libmodplug
+  libplacebo.so
   libopenmpt.so
   libpulse
   libraw1394
+  librubberband.so
   librsvg-2.so
   libsoxr
   libssh
@@ -81,6 +86,7 @@ depends=(
   opencore-amr
   openjpeg2
   opus
+  snappy
   rav1e
   sdl2
   speex
@@ -97,6 +103,7 @@ makedepends=(
   amf-headers
   avisynthplus
   clang
+  frei0r-plugins
   git
   ladspa
   mesa
@@ -108,6 +115,7 @@ makedepends=(
 )
 optdepends=(
   'avisynthplus: AviSynthPlus support'
+  'frei0r-plugins: Frei0r video effects support'
   'ladspa: LADSPA filters'
 )
 provides=(
@@ -126,7 +134,8 @@ conflicts=(
   ffmpeg
   $pkgname
 )
-_tag=3949db4d261748a9f34358a388ee255ad1a7f0c0
+_tag=6f4048827982a8f48f71f551a6e1ed2362816eec
+
 source=(
   git+https://git.ffmpeg.org/ffmpeg.git?#tag=${_tag}
   "obs-deps::git+https://github.com/obsproject/obs-deps.git#tag=${_obs_deps_tag}"
@@ -137,7 +146,7 @@ source=(
 b2sums=('SKIP'
         'SKIP'
         '555274228e09a233d92beb365d413ff5c718a782008075552cafb2130a3783cf976b51dfe4513c15777fb6e8397a34122d475080f2c4483e8feea5c0d878e6de'
-        '54730be7f2ea2e9302d362370b7c64b740c43117d12e40f0898e36c0bfac5932e02aef51b2e5c92a504b77f172e723ee5835101bb7a2393dc6f8ce3e3a2d41fc')
+        '08f74bac9a3ae1cdac86778551220596ae639bc2483b20acfecb4c02cb1d2774330cb02778e26a71c8f041a8eb47a16b4b8a7053979fad6881e46d8b8beaa2a9')
 
 validpgpkeys=(DD1EC9E8DE085C629B3E1846B18E8928B3948D64) # Michael Niedermayer <michael@niedermayer.cc>
 
@@ -159,6 +168,19 @@ prepare() {
   #  - Add additional CPU levels for libaom
   patch -Np1 -i ../obs-deps/deps.ffmpeg/patches/FFmpeg/0001-flvdec-handle-unknown.patch
   patch -Np1 -i ../obs-deps/deps.ffmpeg/patches/FFmpeg/0002-libaomenc-presets.patch
+  
+  # FS#79281: fix assembling with binutil as >= 2.41
+  git cherry-pick -n effadce6c756247ea8bae32dc13bb3e6f464f0eb
+  # FS#77813: fix playing ogg files with mplayer
+  git cherry-pick -n cbcc817353a019da4332ad43deb7bbc4e695d02a
+  # use non-deprecated nvenc GUID for conftest
+  git cherry-pick -n 03823ac0c6a38bd6ba972539e3203a592579792f
+  git cherry-pick -n d2b46c1ef768bc31ba9180f6d469d5b8be677500
+  # Fix VDPAU vo
+  git cherry-pick -n e9c93009fc34ca9dfcf0c6f2ed90ef1df298abf7
+  # Fix bug in av_fft_end
+  git cherry-pick -n a562cfee2e214252f8b3f516527272ae32ef9532
+  git cherry-pick -n 250471ea1745fc703eb346a2a662304536a311b1
 }
 
 pkgver() {
@@ -178,6 +200,7 @@ build() {
     --enable-avisynth \
     --enable-cuda-llvm \
     --enable-fontconfig \
+    --enable-frei0r \
     --enable-gmp \
     --enable-gnutls \
     --enable-gpl \
@@ -191,6 +214,7 @@ build() {
     --enable-libfreetype \
     --enable-libfribidi \
     --enable-libgsm \
+    --enable-libharfbuzz \
     --enable-libiec61883 \
     --enable-libjack \
     --enable-libjxl \
@@ -201,9 +225,12 @@ build() {
     --enable-libopenjpeg \
     --enable-libopenmpt \
     --enable-libopus \
+    --enable-libplacebo \
     --enable-libpulse \
     --enable-librav1e \
     --enable-librsvg \
+    --enable-librubberband \
+    --enable-libsnappy \
     --enable-libsoxr \
     --enable-libspeex \
     --enable-libsrt \

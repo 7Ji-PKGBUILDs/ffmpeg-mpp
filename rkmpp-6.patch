@@ -1,4 +1,4 @@
-From 3262b03e2a59ec36b3c69fc3fed6f1aa931cf69d Mon Sep 17 00:00:00 2001
+From 165c9ed2da297419713051b2e6b2dbd2d982f85f Mon Sep 17 00:00:00 2001
 From: rigaya <rigaya34589@live.jp>
 Date: Fri, 7 Apr 2023 22:45:51 +0900
 Subject: [PATCH 01/13] avdevice/v4l2: add v4l2 multi-planar API support
@@ -340,10 +340,10 @@ index 5e85d1a2b3..249bedfaaa 100644
          av_log(ctx, AV_LOG_VERBOSE,
                 "Querying the device for the current frame size\n");
 -- 
-2.41.0
+2.43.0
 
 
-From 16f078866ae21f5a0c34897b14af1d975f1ae203 Mon Sep 17 00:00:00 2001
+From 079e220d983866c3013da64ff7a1e73cf9c70b85 Mon Sep 17 00:00:00 2001
 From: rigaya <rigaya34589@live.jp>
 Date: Fri, 7 Apr 2023 22:47:10 +0900
 Subject: [PATCH 02/13] avdevice/v4l2: add nv16, nv24 support
@@ -366,10 +366,10 @@ index b5b4448a31..1926179fdc 100644
      { AV_PIX_FMT_NONE,    AV_CODEC_ID_MJPEG,    V4L2_PIX_FMT_MJPEG   },
      { AV_PIX_FMT_NONE,    AV_CODEC_ID_MJPEG,    V4L2_PIX_FMT_JPEG    },
 -- 
-2.41.0
+2.43.0
 
 
-From 7e3c98159375a5466c03b1853daaca212bf2008b Mon Sep 17 00:00:00 2001
+From 58ccf2a06ad7457b3a10721b4eb4c40af7337ae3 Mon Sep 17 00:00:00 2001
 From: rigaya <rigaya34589@live.jp>
 Date: Sat, 8 Apr 2023 09:48:45 +0900
 Subject: [PATCH 03/13] avdevice/v4l2: add option to ignore input error
@@ -423,10 +423,10 @@ index 249bedfaaa..9bdcc324ae 100644
      { "list_formats", "list available formats and exit",                          OFFSET(list_format),  AV_OPT_TYPE_INT,    {.i64 = 0 },  0, INT_MAX, DEC, "list_formats" },
      { "all",          "show all available formats",                               OFFSET(list_format),  AV_OPT_TYPE_CONST,  {.i64 = V4L_ALLFORMATS  },    0, INT_MAX, DEC, "list_formats" },
 -- 
-2.41.0
+2.43.0
 
 
-From 6dfc851fa786023ba4d036f4b0a699dc2599d804 Mon Sep 17 00:00:00 2001
+From fde6c46c732334026888823c10b15c9dfa3a3d81 Mon Sep 17 00:00:00 2001
 From: rigaya <rigaya34589@live.jp>
 Date: Sat, 8 Apr 2023 09:49:05 +0900
 Subject: [PATCH 04/13] avdevice/v4l2: estimate framerate from dv-timings when
@@ -480,10 +480,10 @@ index 9bdcc324ae..2146c6cd57 100644
          if (streamparm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME) {
              tpf = &streamparm.parm.capture.timeperframe;
 -- 
-2.41.0
+2.43.0
 
 
-From 6b8f166c76fe3e7cdb57811d09a64162169a2ff1 Mon Sep 17 00:00:00 2001
+From 178b978dd77658fcd3cb97ca9a877af2b3af8da2 Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Sat, 17 Jun 2023 18:56:02 +0200
 Subject: [PATCH 05/13] v4l2: use always channel 0 if driver does not return
@@ -521,25 +521,25 @@ index 2146c6cd57..6b7c5dbc20 100644
      { "list_formats", "list available formats and exit",                          OFFSET(list_format),  AV_OPT_TYPE_INT,    {.i64 = 0 },  0, INT_MAX, DEC, "list_formats" },
      { "all",          "show all available formats",                               OFFSET(list_format),  AV_OPT_TYPE_CONST,  {.i64 = V4L_ALLFORMATS  },    0, INT_MAX, DEC, "list_formats" },
 -- 
-2.41.0
+2.43.0
 
 
-From 0f71b074a151ae47006a40ae4a2c8c8a434c3d94 Mon Sep 17 00:00:00 2001
+From a0cc33ad6988f021d2e4d99fe51e2653dc488622 Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Mon, 24 Jul 2023 16:05:01 +0200
 Subject: [PATCH 06/13] remove old rkmpp
 
 ---
- libavcodec/rkmppdec.c | 587 ------------------------------------------
- 1 file changed, 587 deletions(-)
+ libavcodec/rkmppdec.c | 589 ------------------------------------------
+ 1 file changed, 589 deletions(-)
  delete mode 100644 libavcodec/rkmppdec.c
 
 diff --git a/libavcodec/rkmppdec.c b/libavcodec/rkmppdec.c
 deleted file mode 100644
-index 8bf7c6ed16..0000000000
+index 5768568b00..0000000000
 --- a/libavcodec/rkmppdec.c
 +++ /dev/null
-@@ -1,587 +0,0 @@
+@@ -1,589 +0,0 @@
 -/*
 - * RockChip MPP Video Decoder
 - * Copyright (c) 2017 Lionel CHAZALLON
@@ -946,8 +946,10 @@ index 8bf7c6ed16..0000000000
 -        frame->colorspace       = mpp_frame_get_colorspace(mppframe);
 -
 -        mode = mpp_frame_get_mode(mppframe);
--        frame->interlaced_frame = ((mode & MPP_FRAME_FLAG_FIELD_ORDER_MASK) == MPP_FRAME_FLAG_DEINTERLACED);
--        frame->top_field_first  = ((mode & MPP_FRAME_FLAG_FIELD_ORDER_MASK) == MPP_FRAME_FLAG_TOP_FIRST);
+-        if ((mode & MPP_FRAME_FLAG_FIELD_ORDER_MASK) == MPP_FRAME_FLAG_DEINTERLACED)
+-            frame->flags |= AV_FRAME_FLAG_INTERLACED;
+-        if ((mode & MPP_FRAME_FLAG_FIELD_ORDER_MASK) == MPP_FRAME_FLAG_TOP_FIRST)
+-            frame->flags |= AV_FRAME_FLAG_TOP_FIELD_FIRST;
 -
 -        mppformat = mpp_frame_get_fmt(mppframe);
 -        drmformat = rkmpp_get_frameformat(mppformat);
@@ -1128,10 +1130,10 @@ index 8bf7c6ed16..0000000000
 -RKMPP_DEC(vp8,   AV_CODEC_ID_VP8,           NULL)
 -RKMPP_DEC(vp9,   AV_CODEC_ID_VP9,           NULL)
 -- 
-2.41.0
+2.43.0
 
 
-From d0260e7573b9695e738e4b9a3ae02616fbeaacf0 Mon Sep 17 00:00:00 2001
+From 067e4ecd07589c52a540a87fa1f4e52d9ec6a648 Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Mon, 24 Jul 2023 16:01:21 +0200
 Subject: [PATCH 07/13] prepare buildsystem for rkmpp
@@ -1142,11 +1144,11 @@ Subject: [PATCH 07/13] prepare buildsystem for rkmpp
  2 files changed, 29 insertions(+), 5 deletions(-)
 
 diff --git a/configure b/configure
-index b6616f00b6..9bbf39b9ce 100755
+index a89cfa6d95..5db02b23ee 100755
 --- a/configure
 +++ b/configure
-@@ -3161,8 +3161,10 @@ av1_mediacodec_decoder_deps="mediacodec"
- av1_mediacodec_decoder_extralibs="-landroid"
+@@ -3213,8 +3213,10 @@ av1_mediacodec_decoder_deps="mediacodec"
+ av1_mediacodec_encoder_deps="mediacodec"
  av1_nvenc_encoder_deps="nvenc NV_ENC_PIC_PARAMS_AV1"
  av1_nvenc_encoder_select="atsc_a53"
 +av1_rkmpp_decoder_deps="rkmpp"
@@ -1156,7 +1158,7 @@ index b6616f00b6..9bbf39b9ce 100755
  h264_amf_encoder_deps="amf"
  h264_crystalhd_decoder_select="crystalhd h264_mp4toannexb_bsf h264_parser"
  h264_cuvid_decoder_deps="cuvid"
-@@ -3182,6 +3184,8 @@ h264_qsv_decoder_select="h264_mp4toannexb_bsf qsvdec"
+@@ -3232,6 +3234,8 @@ h264_qsv_decoder_select="h264_mp4toannexb_bsf qsvdec"
  h264_qsv_encoder_select="atsc_a53 qsvenc"
  h264_rkmpp_decoder_deps="rkmpp"
  h264_rkmpp_decoder_select="h264_mp4toannexb_bsf"
@@ -1165,7 +1167,7 @@ index b6616f00b6..9bbf39b9ce 100755
  h264_vaapi_encoder_select="atsc_a53 cbs_h264 vaapi_encode"
  h264_v4l2m2m_decoder_deps="v4l2_m2m h264_v4l2_m2m"
  h264_v4l2m2m_decoder_select="h264_mp4toannexb_bsf"
-@@ -3202,6 +3206,8 @@ hevc_qsv_decoder_select="hevc_mp4toannexb_bsf qsvdec"
+@@ -3250,6 +3254,8 @@ hevc_qsv_decoder_select="hevc_mp4toannexb_bsf qsvdec"
  hevc_qsv_encoder_select="hevcparse qsvenc"
  hevc_rkmpp_decoder_deps="rkmpp"
  hevc_rkmpp_decoder_select="hevc_mp4toannexb_bsf"
@@ -1174,7 +1176,7 @@ index b6616f00b6..9bbf39b9ce 100755
  hevc_vaapi_encoder_deps="VAEncPictureParameterBufferHEVC"
  hevc_vaapi_encoder_select="atsc_a53 cbs_h265 vaapi_encode"
  hevc_v4l2m2m_decoder_deps="v4l2_m2m hevc_v4l2_m2m"
-@@ -3216,6 +3222,7 @@ mjpeg_vaapi_encoder_select="cbs_jpeg jpegtables vaapi_encode"
+@@ -3264,6 +3270,7 @@ mjpeg_vaapi_encoder_select="cbs_jpeg jpegtables vaapi_encode"
  mp3_mf_encoder_deps="mediafoundation"
  mpeg1_cuvid_decoder_deps="cuvid"
  mpeg1_v4l2m2m_decoder_deps="v4l2_m2m mpeg1_v4l2_m2m"
@@ -1182,7 +1184,7 @@ index b6616f00b6..9bbf39b9ce 100755
  mpeg2_crystalhd_decoder_select="crystalhd"
  mpeg2_cuvid_decoder_deps="cuvid"
  mpeg2_mmal_decoder_deps="mmal"
-@@ -3224,6 +3231,7 @@ mpeg2_qsv_decoder_select="qsvdec"
+@@ -3272,6 +3279,7 @@ mpeg2_qsv_decoder_select="qsvdec"
  mpeg2_qsv_encoder_select="qsvenc"
  mpeg2_vaapi_encoder_select="cbs_mpeg2 vaapi_encode"
  mpeg2_v4l2m2m_decoder_deps="v4l2_m2m mpeg2_v4l2_m2m"
@@ -1190,7 +1192,7 @@ index b6616f00b6..9bbf39b9ce 100755
  mpeg4_crystalhd_decoder_select="crystalhd"
  mpeg4_cuvid_decoder_deps="cuvid"
  mpeg4_mediacodec_decoder_deps="mediacodec"
-@@ -3231,6 +3239,7 @@ mpeg4_mmal_decoder_deps="mmal"
+@@ -3280,6 +3288,7 @@ mpeg4_mmal_decoder_deps="mmal"
  mpeg4_omx_encoder_deps="omx"
  mpeg4_v4l2m2m_decoder_deps="v4l2_m2m mpeg4_v4l2_m2m"
  mpeg4_v4l2m2m_encoder_deps="v4l2_m2m mpeg4_v4l2_m2m"
@@ -1198,15 +1200,15 @@ index b6616f00b6..9bbf39b9ce 100755
  msmpeg4_crystalhd_decoder_select="crystalhd"
  vc1_crystalhd_decoder_select="crystalhd"
  vc1_cuvid_decoder_deps="cuvid"
-@@ -3241,6 +3250,7 @@ vp8_cuvid_decoder_deps="cuvid"
- vp8_mediacodec_decoder_deps="mediacodec"
+@@ -3291,6 +3300,7 @@ vp8_mediacodec_decoder_deps="mediacodec"
+ vp8_mediacodec_encoder_deps="mediacodec"
  vp8_qsv_decoder_select="qsvdec"
  vp8_rkmpp_decoder_deps="rkmpp"
 +vp8_rkmpp_encoder_deps="rkmpp"
  vp8_vaapi_encoder_deps="VAEncPictureParameterBufferVP8"
  vp8_vaapi_encoder_select="vaapi_encode"
  vp8_v4l2m2m_decoder_deps="v4l2_m2m vp8_v4l2_m2m"
-@@ -6791,8 +6801,14 @@ enabled openssl           && { { check_pkg_config openssl "openssl >= 3.0.0" ope
+@@ -6907,8 +6917,14 @@ enabled openssl           && { { check_pkg_config openssl "openssl >= 3.0.0" ope
  enabled pocketsphinx      && require_pkg_config pocketsphinx pocketsphinx pocketsphinx/pocketsphinx.h ps_init
  enabled rkmpp             && { require_pkg_config rkmpp rockchip_mpp  rockchip/rk_mpi.h mpp_create &&
                                 require_pkg_config rockchip_mpp "rockchip_mpp >= 1.3.7" rockchip/rk_mpi.h mpp_create &&
@@ -1223,18 +1225,18 @@ index b6616f00b6..9bbf39b9ce 100755
  enabled vapoursynth       && require_pkg_config vapoursynth "vapoursynth-script >= 42" VSScript.h vsscript_init
  
 diff --git a/libavcodec/Makefile b/libavcodec/Makefile
-index 389253f5d0..5462385307 100644
+index ec57e53e30..b53e703658 100644
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -255,6 +255,7 @@ OBJS-$(CONFIG_AV1_CUVID_DECODER)       += cuviddec.o
- OBJS-$(CONFIG_AV1_MEDIACODEC_DECODER)  += mediacodecdec.o
+@@ -256,6 +256,7 @@ OBJS-$(CONFIG_AV1_MEDIACODEC_ENCODER)  += mediacodecenc.o
  OBJS-$(CONFIG_AV1_NVENC_ENCODER)       += nvenc_av1.o nvenc.o
  OBJS-$(CONFIG_AV1_QSV_ENCODER)         += qsvenc_av1.o
+ OBJS-$(CONFIG_AV1_VAAPI_ENCODER)       += vaapi_encode_av1.o av1_levels.o
 +OBJS-$(CONFIG_AV1_RKMPP_DECODER)       += rkmpp.o rkplane.o rkmppdec.o
  OBJS-$(CONFIG_AVRN_DECODER)            += avrndec.o
  OBJS-$(CONFIG_AVRP_DECODER)            += r210dec.o
  OBJS-$(CONFIG_AVRP_ENCODER)            += r210enc.o
-@@ -397,6 +398,7 @@ OBJS-$(CONFIG_H263_ENCODER)            += mpeg4video.o  \
+@@ -398,6 +399,7 @@ OBJS-$(CONFIG_H263_ENCODER)            += mpeg4video.o  \
                                            h263.o ituh263enc.o h263data.o
  OBJS-$(CONFIG_H263_V4L2M2M_DECODER)    += v4l2_m2m_dec.o
  OBJS-$(CONFIG_H263_V4L2M2M_ENCODER)    += v4l2_m2m_enc.o
@@ -1242,7 +1244,7 @@ index 389253f5d0..5462385307 100644
  OBJS-$(CONFIG_H264_DECODER)            += h264dec.o h264_cabac.o h264_cavlc.o \
                                            h264_direct.o h264_loopfilter.o  \
                                            h264_mb.o h264_picture.o \
-@@ -412,7 +414,8 @@ OBJS-$(CONFIG_H264_NVENC_ENCODER)      += nvenc_h264.o nvenc.o
+@@ -413,7 +415,8 @@ OBJS-$(CONFIG_H264_NVENC_ENCODER)      += nvenc_h264.o nvenc.o
  OBJS-$(CONFIG_H264_OMX_ENCODER)        += omx.o
  OBJS-$(CONFIG_H264_QSV_DECODER)        += qsvdec.o
  OBJS-$(CONFIG_H264_QSV_ENCODER)        += qsvenc_h264.o
@@ -1252,7 +1254,7 @@ index 389253f5d0..5462385307 100644
  OBJS-$(CONFIG_H264_VAAPI_ENCODER)      += vaapi_encode_h264.o h264_levels.o \
                                            h2645data.o
  OBJS-$(CONFIG_H264_VIDEOTOOLBOX_ENCODER) += videotoolboxenc.o
-@@ -437,7 +440,8 @@ OBJS-$(CONFIG_HEVC_NVENC_ENCODER)      += nvenc_hevc.o nvenc.o
+@@ -438,7 +441,8 @@ OBJS-$(CONFIG_HEVC_NVENC_ENCODER)      += nvenc_hevc.o nvenc.o
  OBJS-$(CONFIG_HEVC_QSV_DECODER)        += qsvdec.o
  OBJS-$(CONFIG_HEVC_QSV_ENCODER)        += qsvenc_hevc.o hevc_ps_enc.o       \
                                            hevc_data.o
@@ -1262,7 +1264,7 @@ index 389253f5d0..5462385307 100644
  OBJS-$(CONFIG_HEVC_VAAPI_ENCODER)      += vaapi_encode_h265.o h265_profile_level.o \
                                            h2645data.o
  OBJS-$(CONFIG_HEVC_V4L2M2M_DECODER)    += v4l2_m2m_dec.o
-@@ -529,6 +533,7 @@ OBJS-$(CONFIG_MPEG1VIDEO_DECODER)      += mpeg12dec.o mpeg12.o mpeg12data.o
+@@ -530,6 +534,7 @@ OBJS-$(CONFIG_MPEG1VIDEO_DECODER)      += mpeg12dec.o mpeg12.o mpeg12data.o
  OBJS-$(CONFIG_MPEG1VIDEO_ENCODER)      += mpeg12enc.o mpeg12.o
  OBJS-$(CONFIG_MPEG1_CUVID_DECODER)     += cuviddec.o
  OBJS-$(CONFIG_MPEG1_V4L2M2M_DECODER)   += v4l2_m2m_dec.o
@@ -1270,7 +1272,7 @@ index 389253f5d0..5462385307 100644
  OBJS-$(CONFIG_MPEG2_MMAL_DECODER)      += mmaldec.o
  OBJS-$(CONFIG_MPEG2_QSV_DECODER)       += qsvdec.o
  OBJS-$(CONFIG_MPEG2_QSV_ENCODER)       += qsvenc_mpeg2.o
-@@ -539,12 +544,14 @@ OBJS-$(CONFIG_MPEG2_MEDIACODEC_DECODER) += mediacodecdec.o
+@@ -540,6 +545,7 @@ OBJS-$(CONFIG_MPEG2_MEDIACODEC_DECODER) += mediacodecdec.o
  OBJS-$(CONFIG_MPEG2_VAAPI_ENCODER)     += vaapi_encode_mpeg2.o
  OBJS-$(CONFIG_MPEG2_V4L2M2M_DECODER)   += v4l2_m2m_dec.o
  OBJS-$(CONFIG_MPEG4_DECODER)           += mpeg4videodsp.o xvididct.o
@@ -1278,6 +1280,7 @@ index 389253f5d0..5462385307 100644
  OBJS-$(CONFIG_MPEG4_ENCODER)           += mpeg4videoenc.o
  OBJS-$(CONFIG_MPEG4_CUVID_DECODER)     += cuviddec.o
  OBJS-$(CONFIG_MPEG4_MEDIACODEC_DECODER) += mediacodecdec.o
+@@ -547,6 +553,7 @@ OBJS-$(CONFIG_MPEG4_MEDIACODEC_ENCODER) += mediacodecenc.o
  OBJS-$(CONFIG_MPEG4_OMX_ENCODER)       += omx.o
  OBJS-$(CONFIG_MPEG4_V4L2M2M_DECODER)   += v4l2_m2m_dec.o
  OBJS-$(CONFIG_MPEG4_V4L2M2M_ENCODER)   += v4l2_m2m_enc.o
@@ -1285,9 +1288,9 @@ index 389253f5d0..5462385307 100644
  OBJS-$(CONFIG_MPL2_DECODER)            += mpl2dec.o ass.o
  OBJS-$(CONFIG_MSA1_DECODER)            += mss3.o
  OBJS-$(CONFIG_MSCC_DECODER)            += mscc.o
-@@ -765,7 +772,8 @@ OBJS-$(CONFIG_VP8_DECODER)             += vp8.o vpx_rac.o
- OBJS-$(CONFIG_VP8_CUVID_DECODER)       += cuviddec.o
+@@ -773,7 +780,8 @@ OBJS-$(CONFIG_VP8_CUVID_DECODER)       += cuviddec.o
  OBJS-$(CONFIG_VP8_MEDIACODEC_DECODER)  += mediacodecdec.o
+ OBJS-$(CONFIG_VP8_MEDIACODEC_ENCODER)  += mediacodecenc.o
  OBJS-$(CONFIG_VP8_QSV_DECODER)         += qsvdec.o
 -OBJS-$(CONFIG_VP8_RKMPP_DECODER)       += rkmppdec.o
 +OBJS-$(CONFIG_VP8_RKMPP_DECODER)       += rkmpp.o rkplane.o rkmppdec.o
@@ -1295,20 +1298,20 @@ index 389253f5d0..5462385307 100644
  OBJS-$(CONFIG_VP8_VAAPI_ENCODER)       += vaapi_encode_vp8.o
  OBJS-$(CONFIG_VP8_V4L2M2M_DECODER)     += v4l2_m2m_dec.o
  OBJS-$(CONFIG_VP8_V4L2M2M_ENCODER)     += v4l2_m2m_enc.o
-@@ -774,7 +782,7 @@ OBJS-$(CONFIG_VP9_DECODER)             += vp9.o vp9data.o vp9dsp.o vp9lpf.o vp9r
-                                           vp9dsp_8bpp.o vp9dsp_10bpp.o vp9dsp_12bpp.o
+@@ -783,7 +791,7 @@ OBJS-$(CONFIG_VP9_DECODER)             += vp9.o vp9data.o vp9dsp.o vp9lpf.o vp9r
  OBJS-$(CONFIG_VP9_CUVID_DECODER)       += cuviddec.o
  OBJS-$(CONFIG_VP9_MEDIACODEC_DECODER)  += mediacodecdec.o
+ OBJS-$(CONFIG_VP9_MEDIACODEC_ENCODER)  += mediacodecenc.o
 -OBJS-$(CONFIG_VP9_RKMPP_DECODER)       += rkmppdec.o
 +OBJS-$(CONFIG_VP9_RKMPP_DECODER)       += rkmpp.o rkplane.o rkmppdec.o
  OBJS-$(CONFIG_VP9_VAAPI_ENCODER)       += vaapi_encode_vp9.o
  OBJS-$(CONFIG_VP9_QSV_ENCODER)         += qsvenc_vp9.o
  OBJS-$(CONFIG_VPLAYER_DECODER)         += textdec.o ass.o
 -- 
-2.41.0
+2.43.0
 
 
-From ebd97550cf3a9a1902b5a58566caa846f9ad2114 Mon Sep 17 00:00:00 2001
+From 793f27620fd634a26ea9644cf8660f2332f4fece Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Mon, 24 Jul 2023 16:14:02 +0200
 Subject: [PATCH 08/13] register all codec as highest prio
@@ -1318,7 +1321,7 @@ Subject: [PATCH 08/13] register all codec as highest prio
  1 file changed, 14 insertions(+), 4 deletions(-)
 
 diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
-index e593ad19af..082c4b8e29 100644
+index 5136a566f1..eec6173507 100644
 --- a/libavcodec/allcodecs.c
 +++ b/libavcodec/allcodecs.c
 @@ -34,6 +34,20 @@
@@ -1355,7 +1358,7 @@ index e593ad19af..082c4b8e29 100644
  extern const FFCodec ff_hevc_v4l2m2m_decoder;
  extern const FFCodec ff_hnm4_video_decoder;
  extern const FFCodec ff_hq_hqa_decoder;
-@@ -377,10 +389,8 @@ extern const FFCodec ff_vp6a_decoder;
+@@ -381,10 +393,8 @@ extern const FFCodec ff_vp6a_decoder;
  extern const FFCodec ff_vp6f_decoder;
  extern const FFCodec ff_vp7_decoder;
  extern const FFCodec ff_vp8_decoder;
@@ -1367,10 +1370,10 @@ index e593ad19af..082c4b8e29 100644
  extern const FFCodec ff_vqa_decoder;
  extern const FFCodec ff_vqc_decoder;
 -- 
-2.41.0
+2.43.0
 
 
-From d22e82146f7eb6f22018e36815810af70c358783 Mon Sep 17 00:00:00 2001
+From d177215ac45a0f4c7375acf7b41d7074b9d2bc0c Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Mon, 24 Jul 2023 16:10:39 +0200
 Subject: [PATCH 09/13] initial
@@ -3629,21 +3632,21 @@ index 0000000000..f52d29228b
 +int import_mpp_to_drm(AVCodecContext *avctx, MppFrame mppframe, AVFrame *frame);
 +MppFrame get_mppframe_from_av(AVFrame *frame);
 -- 
-2.41.0
+2.43.0
 
 
-From 02558d6b5293b3fdd89f2fe2721938d3e22786a2 Mon Sep 17 00:00:00 2001
+From 7f8c97c25debe3fd13da0c84a83103c56db03f9a Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Mon, 24 Jul 2023 19:27:37 +0200
 Subject: [PATCH 10/13] lavu/hwcontext_drm: Add internal frame allocation
 
 ---
  libavutil/hwcontext_drm.c | 322 +++++++++++++++++++++++++++++++++++++-
- libavutil/hwcontext_drm.h |  14 +-
- 2 files changed, 328 insertions(+), 8 deletions(-)
+ libavutil/hwcontext_drm.h |  25 ++-
+ 2 files changed, 339 insertions(+), 8 deletions(-)
 
 diff --git a/libavutil/hwcontext_drm.c b/libavutil/hwcontext_drm.c
-index 7a9fdbd263..2d1962c9c0 100644
+index 7a9fdbd263..bdbd4c7914 100644
 --- a/libavutil/hwcontext_drm.c
 +++ b/libavutil/hwcontext_drm.c
 @@ -18,6 +18,7 @@
@@ -3829,16 +3832,16 @@ index 7a9fdbd263..2d1962c9c0 100644
 +}
 +
 +static void free_drm_frame_descriptor(AVDRMDeviceContext *hwctx,
-+                                      AVDRMFrameDescriptor *desc)
++                                      AVDRMCompatibleFrameDescriptor *desc)
 +{
 +    int i;
 +    if (!desc)
 +        return;
 +
-+    for (i = 0; i < desc->nb_objects; i++) {
-+        AVDRMObjectDescriptor *object = &desc->objects[i];
-+        if (object->ptr)
-+            drm_munmap(object->ptr, object->size);
++    for (i = 0; i < desc->drm_desc.nb_objects; i++) {
++        AVDRMObjectDescriptor *object = &desc->drm_desc.objects[i];
++        if (desc->opaque)
++            drm_munmap(desc->opaque, object->size);
 +        if (object->fd > 0) {
 +            int ret;
 +            uint32_t handle = 0;
@@ -3872,7 +3875,7 @@ index 7a9fdbd263..2d1962c9c0 100644
 +{
 +    AVHWFramesContext *hwfc = opaque;
 +    AVDRMDeviceContext *hwctx = hwfc->device_ctx->hwctx;
-+    AVDRMFrameDescriptor *desc = (AVDRMFrameDescriptor *)data;
++    AVDRMCompatibleFrameDescriptor *desc = (AVDRMFrameDescriptor *)data;
 +
 +    free_drm_frame_descriptor(hwctx, desc);
 +}
@@ -3882,7 +3885,7 @@ index 7a9fdbd263..2d1962c9c0 100644
 +    int ret;
 +    AVHWFramesContext *hwfc = opaque;
 +    AVDRMDeviceContext *hwctx = hwfc->device_ctx->hwctx;
-+    AVDRMFrameDescriptor *desc;
++    AVDRMCompatibleFrameDescriptor *desc;
 +    AVDRMLayerDescriptor *layer;
 +    AVBufferRef *ref;
 +
@@ -3908,10 +3911,10 @@ index 7a9fdbd263..2d1962c9c0 100644
 +    }
 +    av_assert0(dmcb.size >= dmcb.width * dmcb.height * dmcb.bpp / 8);
 +
-+    desc->nb_objects = 1;
-+    desc->nb_layers = 1;
++    desc->drm_desc.nb_objects = 1;
++    desc->drm_desc.nb_layers = 1;
 +    ret = drmPrimeHandleToFD(hwctx->fd, dmcb.handle, DRM_CLOEXEC | DRM_RDWR,
-+                             &desc->objects[0].fd);
++                             &desc->drm_desc.objects[0].fd);
 +    if (ret) {
 +        av_log(hwfc, AV_LOG_ERROR, "Failed to convert handle to fd: %m\n");
 +        goto fail;
@@ -3926,16 +3929,16 @@ index 7a9fdbd263..2d1962c9c0 100644
 +    }
 +
 +    // default read and write
-+    desc->objects[0].ptr = drm_mmap(NULL, dmcb.size, PROT_READ | PROT_WRITE,
++    desc->opaque = drm_mmap(NULL, dmcb.size, PROT_READ | PROT_WRITE,
 +                                    MAP_SHARED, hwctx->fd, dmmd.offset);
-+    if (desc->objects[0].ptr == MAP_FAILED) {
++    if (desc->opaque== MAP_FAILED) {
 +        av_log(hwfc, AV_LOG_ERROR, "Failed to drm_mmap: %m\n");
 +        goto fail;
 +    }
 +
-+    desc->objects[0].size = dmcb.size;
++    desc->drm_desc.objects[0].size = dmcb.size;
 +
-+    layer = &desc->layers[0];
++    layer = &desc->drm_desc.layers[0];
 +    for (i = 0; i < FF_ARRAY_ELEMS(supported_formats); i++) {
 +        if (supported_formats[i].pixfmt == hwfc->sw_format) {
 +            layer->format = supported_formats[i].drm_format;
@@ -4017,7 +4020,7 @@ index 7a9fdbd263..2d1962c9c0 100644
      .transfer_data_to       = &drm_transfer_data_to,
      .transfer_data_from     = &drm_transfer_data_from,
 diff --git a/libavutil/hwcontext_drm.h b/libavutil/hwcontext_drm.h
-index 42709f215e..80f2e8597e 100644
+index 42709f215e..6bac73d106 100644
 --- a/libavutil/hwcontext_drm.h
 +++ b/libavutil/hwcontext_drm.h
 @@ -25,11 +25,6 @@
@@ -4032,20 +4035,7 @@ index 42709f215e..80f2e8597e 100644
   */
  
  enum {
-@@ -50,6 +45,12 @@ typedef struct AVDRMObjectDescriptor {
-      * DRM PRIME fd for the object.
-      */
-     int fd;
-+    /**
-+     * DRM PRIME mapped virtual ptr for above fd.
-+     *
-+     * The content of this buffer must be readonly when acting decoder's out buffer.
-+     */
-+    void *ptr;
-     /**
-      * Total size of the object.
-      *
-@@ -141,10 +142,13 @@ typedef struct AVDRMFrameDescriptor {
+@@ -141,14 +136,34 @@ typedef struct AVDRMFrameDescriptor {
      AVDRMObjectDescriptor objects[AV_DRM_MAX_PLANES];
      /**
       * Number of layers in the frame.
@@ -4059,11 +4049,32 @@ index 42709f215e..80f2e8597e 100644
       */
      AVDRMLayerDescriptor layers[AV_DRM_MAX_PLANES];
  } AVDRMFrameDescriptor;
+ 
++/**
++ * DRM Compatible frame descriptor.
++ *
++ */
++typedef struct AVDRMCompatibleFrameDescriptor {
++    /**
++     * Backwards compatibility with AVDRMFrameDescriptor.
++     */
++    AVDRMFrameDescriptor drm_desc;
++
++    /**
++     * References to MppBuffer instances which are used
++     * on each drm frame index.
++     */
++    void* opaque;
++} AVDRMCompatibleFrameDescriptor;
++
+ /**
+  * DRM device.
+  *
 -- 
-2.41.0
+2.43.0
 
 
-From b574fcccc22f89e4955997c7ba7cdd33e109ba55 Mon Sep 17 00:00:00 2001
+From 77a7f1e8beb238edbb4fd0784cb8dcf37e2e95fc Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Mon, 24 Jul 2023 22:19:14 +0200
 Subject: [PATCH 11/13] add yuv444 & nv24 support for drm hwcontext
@@ -4073,7 +4084,7 @@ Subject: [PATCH 11/13] add yuv444 & nv24 support for drm hwcontext
  1 file changed, 2 insertions(+)
 
 diff --git a/libavutil/hwcontext_drm.c b/libavutil/hwcontext_drm.c
-index 2d1962c9c0..9210b6c9f5 100644
+index bdbd4c7914..afdaabed1b 100644
 --- a/libavutil/hwcontext_drm.c
 +++ b/libavutil/hwcontext_drm.c
 @@ -117,6 +117,8 @@ static const struct {
@@ -4086,10 +4097,10 @@ index 2d1962c9c0..9210b6c9f5 100644
      { AV_PIX_FMT_RGB555LE,  DRM_FORMAT_XRGB1555,    },
      { AV_PIX_FMT_RGB555BE,  DRM_FORMAT_XRGB1555 | DRM_FORMAT_BIG_ENDIAN },
 -- 
-2.41.0
+2.43.0
 
 
-From 05e60160b983dda82ac0a870b5e9c051ed021d6a Mon Sep 17 00:00:00 2001
+From 5b6c22ecd693412e76f334a496e7946f94beb2a0 Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Fri, 28 Jul 2023 22:08:47 +0200
 Subject: [PATCH 12/13] add AV_PIX_FMT_NV15 definition as a placeholder to
@@ -4115,7 +4126,7 @@ index c854c7eeff..173c664156 100644
          { .av = AV_PIX_FMT_BGR0,    .mpp = MPP_FMT_BGRA8888,       .drm = DRM_FORMAT_XRGB8888, .rga = RK_FORMAT_BGRX_8888},
          { .av = AV_PIX_FMT_BGRA,    .mpp = MPP_FMT_BGRA8888,       .drm = DRM_FORMAT_ARGB8888, .rga = RK_FORMAT_BGRA_8888},
 diff --git a/libavutil/hwcontext_drm.c b/libavutil/hwcontext_drm.c
-index 9210b6c9f5..32bf958c5d 100644
+index afdaabed1b..06d959bdb9 100644
 --- a/libavutil/hwcontext_drm.c
 +++ b/libavutil/hwcontext_drm.c
 @@ -138,6 +138,7 @@ static const struct {
@@ -4127,12 +4138,12 @@ index 9210b6c9f5..32bf958c5d 100644
  
  static void drm_device_free(AVHWDeviceContext *hwdev)
 diff --git a/libavutil/pixfmt.h b/libavutil/pixfmt.h
-index 37c2c79e01..d2348b016b 100644
+index a26c72d56b..4ffd1091f5 100644
 --- a/libavutil/pixfmt.h
 +++ b/libavutil/pixfmt.h
-@@ -420,6 +420,8 @@ enum AVPixelFormat {
-     AV_PIX_FMT_RGBAF32BE,   ///< IEEE-754 single precision packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., big-endian
-     AV_PIX_FMT_RGBAF32LE,   ///< IEEE-754 single precision packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., little-endian
+@@ -429,6 +429,8 @@ enum AVPixelFormat {
+     AV_PIX_FMT_GBRAP14BE,  ///< planar GBR 4:4:4:4 56bpp, big-endian
+     AV_PIX_FMT_GBRAP14LE,  ///< planar GBR 4:4:4:4 56bpp, little-endian
  
 +    AV_PIX_FMT_NV15,        ///< Rockchip Specific 10bit NV12
 +
@@ -4140,10 +4151,10 @@ index 37c2c79e01..d2348b016b 100644
  };
  
 -- 
-2.41.0
+2.43.0
 
 
-From da7d86771bcb88a976769f405dee561b6707be35 Mon Sep 17 00:00:00 2001
+From 0c85a73cd500ec693ae081f7539daa0d5be969ca Mon Sep 17 00:00:00 2001
 From: boogie <boogiepop@gmx.com>
 Date: Mon, 31 Jul 2023 01:32:54 +0200
 Subject: [PATCH 13/13] give pixel descriptor to prevent crashes. descriptor
@@ -4154,12 +4165,12 @@ Subject: [PATCH 13/13] give pixel descriptor to prevent crashes. descriptor
  1 file changed, 12 insertions(+)
 
 diff --git a/libavutil/pixdesc.c b/libavutil/pixdesc.c
-index 62a2ae08d9..c5e8c7bd9a 100644
+index 6ded9467b0..6eb0728923 100644
 --- a/libavutil/pixdesc.c
 +++ b/libavutil/pixdesc.c
-@@ -2717,6 +2717,18 @@ static const AVPixFmtDescriptor av_pix_fmt_descriptors[AV_PIX_FMT_NB] = {
-         .flags = AV_PIX_FMT_FLAG_RGB | AV_PIX_FMT_FLAG_FLOAT |
-                  AV_PIX_FMT_FLAG_ALPHA,
+@@ -2793,6 +2793,18 @@ static const AVPixFmtDescriptor av_pix_fmt_descriptors[AV_PIX_FMT_NB] = {
+         },
+         .flags = AV_PIX_FMT_FLAG_PLANAR,
      },
 +    [AV_PIX_FMT_NV15] = {
 +        .name = "nv15",
@@ -4177,5 +4188,5 @@ index 62a2ae08d9..c5e8c7bd9a 100644
  
  static const char * const color_range_names[] = {
 -- 
-2.41.0
+2.43.0
 
