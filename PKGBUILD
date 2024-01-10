@@ -106,12 +106,13 @@ makedepends=(
   frei0r-plugins
   git
   ladspa
+  libyuv
   mesa
+  mpp-git
   nasm
   opencl-headers
-  mpp-git
-  libyuv
   perl
+  vulkan-headers
 )
 optdepends=(
   'avisynthplus: AviSynthPlus support'
