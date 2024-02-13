@@ -94,7 +94,7 @@ depends=(
   v4l-utils
   xz
   zlib
-  mpp-git
+  mpp
   libyuv
   librist
   librga-multi
